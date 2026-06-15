@@ -8,7 +8,7 @@ celery_app = Celery(
     "decouple",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.ingest"],
+    include=["app.tasks.ingest", "app.tasks.analyze"],
 )
 
 celery_app.conf.update(

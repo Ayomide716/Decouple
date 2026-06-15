@@ -32,6 +32,35 @@ class AnalysisJobDetail(AnalysisJobResponse):
     migration_blueprint: dict[str, Any] | None
 
 
+class BoundedContextPreview(BaseModel):
+    id: str | None
+    name: str | None
+    description: str | None
+    migration_phase: int | None
+    coupling_score: str | None
+
+
+class BlueprintPreview(BaseModel):
+    executive_summary: str | None
+    bounded_contexts_count: int
+    migration_phases_count: int
+    shared_data_risks_count: int
+    bounded_contexts: list[BoundedContextPreview]
+
+
+class BlueprintStatusResponse(BaseModel):
+    """Lightweight response for the frontend polling loop."""
+    id: str
+    repo_name: str
+    status: JobStatus
+    progress: int                         # 0-100
+    total_files: int
+    total_tokens: int
+    error_message: str | None
+    blueprint_preview: BlueprintPreview | None
+    updated_at: datetime
+
+
 class HealthResponse(BaseModel):
     status: str
     environment: str

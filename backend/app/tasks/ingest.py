@@ -9,7 +9,6 @@ Stages:
   5. Dispatch the LLM analysis task (Phase 2)
 """
 
-import ast
 import os
 import shutil
 import uuid
@@ -25,6 +24,7 @@ from pathspec.patterns import GitWildMatchPattern
 
 from app.db.base import SessionLocal
 from app.db.models.analysis import AnalysisJob, JobStatus
+from app.services.analyzer import ASTAnalyzer
 from app.worker import celery_app
 
 log = structlog.get_logger(__name__)
@@ -126,56 +126,6 @@ def _collect_files(repo_root: Path) -> list[Path]:
     return accepted
 
 
-def _extract_python_ast(source: str, rel_path: str) -> dict[str, Any]:
-    """Parse a Python file and return a compact structural summary."""
-    try:
-        tree = ast.parse(source)
-    except SyntaxError as exc:
-        return {"error": str(exc), "path": rel_path}
-
-    imports: list[str] = []
-    functions: list[dict[str, Any]] = []
-    classes: list[dict[str, Any]] = []
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.extend(alias.name for alias in node.names)
-        elif isinstance(node, ast.ImportFrom):
-            module = node.module or ""
-            imports.extend(
-                f"{module}.{alias.name}" for alias in node.names
-            )
-        elif isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            # Only capture top-level and class-level (depth=1) functions
-            functions.append(
-                {
-                    "name": node.name,
-                    "line": node.lineno,
-                    "args": [a.arg for a in node.args.args],
-                    "is_async": isinstance(node, ast.AsyncFunctionDef),
-                    "decorators": [
-                        ast.unparse(d) for d in node.decorator_list
-                    ],
-                    "docstring": ast.get_docstring(node),
-                }
-            )
-        elif isinstance(node, ast.ClassDef):
-            classes.append(
-                {
-                    "name": node.name,
-                    "line": node.lineno,
-                    "bases": [ast.unparse(b) for b in node.bases],
-                    "docstring": ast.get_docstring(node),
-                }
-            )
-
-    return {
-        "path": rel_path,
-        "imports": imports,
-        "functions": functions,
-        "classes": classes,
-    }
-
 
 def _build_file_tree(files: list[Path], repo_root: Path) -> dict[str, Any]:
     """Build a nested dict representing the repository file tree."""
@@ -242,54 +192,39 @@ def task_analyze_repo(
         accepted_files = _collect_files(clone_path)
         logger.info("files_accepted", count=len(accepted_files))
 
-        # ── Stage 3: Build file tree + AST summaries ──────────────────────
+        # ── Stage 3: Build file tree + count tokens ───────────────────────
         file_tree = _build_file_tree(accepted_files, clone_path)
 
-        ast_entries: list[dict[str, Any]] = []
         total_tokens: int = 0
-
         for file_path in accepted_files:
             source = file_path.read_text(encoding="utf-8", errors="ignore")
-            rel_path = str(file_path.relative_to(clone_path))
-            token_count = len(ENCODING.encode(source, disallowed_special=()))
-            total_tokens += token_count
+            total_tokens += len(ENCODING.encode(source, disallowed_special=()))
 
-            if file_path.suffix == ".py":
-                entry = _extract_python_ast(source, rel_path)
-            else:
-                entry = {
-                    "path": rel_path,
-                    "token_count": token_count,
-                    "language": file_path.suffix.lstrip("."),
-                }
-
-            entry["token_count"] = token_count
-            ast_entries.append(entry)
-
-        ast_summary: dict[str, Any] = {
-            "total_files": len(accepted_files),
-            "total_tokens": total_tokens,
-            "files": ast_entries,
-        }
-
-        # ── Stage 4: Persist results ──────────────────────────────────────
         logger.info("persisting_results", total_tokens=total_tokens)
+
+        # ── Stage 4 → 5: Deep AST analysis + dispatch LLM task ───────────
+        python_files = [f for f in accepted_files if f.suffix == ".py"]
+        analyzer = ASTAnalyzer(repo_root=clone_path, python_files=python_files)
+        ast_result = analyzer.analyze(
+            repo_name=clone_path.name,
+            total_files=len(accepted_files),
+            total_tokens=total_tokens,
+        )
+        enriched_summary = analyzer.to_dict(ast_result)
+
         _update_job_status(
             job_id,
             JobStatus.ANALYZING,
             total_files=len(accepted_files),
             total_tokens=total_tokens,
             file_tree=file_tree,
-            ast_summary=ast_summary,
+            ast_summary=enriched_summary,
         )
-
-        # ── Stage 5: Dispatch LLM analysis (Phase 2 placeholder) ─────────
-        # from app.tasks.analyze import task_generate_blueprint
-        # task_generate_blueprint.apply_async(args=[job_id], queue="analysis")
         logger.info("ingestion_complete", job_id=job_id)
 
-        # Temporary: mark completed until Phase 2 LLM task is wired
-        _update_job_status(job_id, JobStatus.COMPLETED)
+        # Dispatch the LLM blueprint task on the dedicated analysis queue
+        from app.tasks.analyze import task_generate_blueprint  # noqa: PLC0415
+        task_generate_blueprint.apply_async(args=[job_id], queue="analysis")
 
         return {"job_id": job_id, "total_files": len(accepted_files), "total_tokens": total_tokens}
 
