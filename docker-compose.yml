@@ -1,0 +1,124 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────────
+  # PostgreSQL
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: decouple_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-decouple}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-decouple_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-decouple_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-decouple} -d ${POSTGRES_DB:-decouple_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # Redis  (broker + Celery result backend)
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: decouple_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret} --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ─────────────────────────────────────────────
+  # FastAPI web server
+  # ─────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: decouple_api
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file: .env
+    environment:
+      - SERVICE_TYPE=api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - repo_scratch:/tmp/decouple_repos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─────────────────────────────────────────────
+  # Celery worker
+  # ─────────────────────────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: decouple_worker
+    restart: unless-stopped
+    command: >
+      celery -A app.worker.celery_app worker
+      --loglevel=info
+      --concurrency=2
+      --queues=ingestion,analysis
+    env_file: .env
+    environment:
+      - SERVICE_TYPE=worker
+    volumes:
+      - ./backend:/app
+      - repo_scratch:/tmp/decouple_repos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────
+  # Celery Flower  (worker monitoring UI)
+  # ─────────────────────────────────────────────
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: decouple_flower
+    restart: unless-stopped
+    command: >
+      celery -A app.worker.celery_app flower
+      --port=5555
+      --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-flower_secret}
+    env_file: .env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
+
+volumes:
+  postgres_data:
+  redis_data:
+  repo_scratch:

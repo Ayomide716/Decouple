@@ -1,0 +1,38 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+.next/
+.nuxt/
+
+# Docker
+*.log
+
+# Scratch
+/tmp/decouple_repos/
+
+# IDE
+.idea/
+.vscode/
+*.swp
