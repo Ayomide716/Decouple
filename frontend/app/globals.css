@@ -59,6 +59,28 @@
   }
 }
 
+/* ── Utility: smooth focus ring ───────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* ── Subtle page gradient ─────────────────────────────────────────────────── */
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% -10%, hsl(217 91% 60% / 0.07) 0%, transparent 70%);
+  z-index: 0;
+}
+main {
+  position: relative;
+  z-index: 1;
+}
+
 /* React Flow overrides */
 .react-flow__renderer {
   border-radius: var(--radius);

@@ -2,24 +2,16 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CheckCircle2,
-  Github,
-  Loader2,
-  Upload,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle2, Github, Loader2, Upload, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-// ── Simulation pipeline ───────────────────────────────────────────────────────
-
 interface PipelineStep {
   label: string;
-  duration: number; // ms
-  progress: number; // 0-100
+  duration: number;
+  progress: number;
 }
 
 const PIPELINE: PipelineStep[] = [
@@ -33,21 +25,19 @@ const PIPELINE: PipelineStep[] = [
   { label: "Blueprint generated ✓", duration: 600,   progress: 100 },
 ];
 
-type FormStage = "idle" | "running" | "done" | "error";
+type FormStage = "idle" | "running" | "done";
 type InputMode = "url" | "upload";
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function RepoIngestionForm() {
   const router = useRouter();
-  const [mode, setMode]               = useState<InputMode>("url");
-  const [repoUrl, setRepoUrl]         = useState("");
-  const [dragActive, setDragActive]   = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [stage, setStage]             = useState<FormStage>("idle");
-  const [stepIndex, setStepIndex]     = useState(0);
-  const [progress, setProgress]       = useState(0);
-  const [stepLabel, setStepLabel]     = useState("");
+  const [mode, setMode]                   = useState<InputMode>("url");
+  const [repoUrl, setRepoUrl]             = useState("");
+  const [dragActive, setDragActive]       = useState(false);
+  const [uploadedFile, setUploadedFile]   = useState<File | null>(null);
+  const [stage, setStage]                 = useState<FormStage>("idle");
+  const [stepIndex, setStepIndex]         = useState(0);
+  const [progress, setProgress]           = useState(0);
+  const [stepLabel, setStepLabel]         = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timeoutsRef  = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -60,24 +50,20 @@ export function RepoIngestionForm() {
     setStage("running");
     setStepIndex(0);
     setProgress(0);
-
     let elapsed = 0;
-
     PIPELINE.forEach((step, i) => {
       const t = setTimeout(() => {
         setStepIndex(i);
         setStepLabel(step.label);
         setProgress(step.progress);
-
         if (i === PIPELINE.length - 1) {
           const done = setTimeout(() => {
             setStage("done");
-            setTimeout(() => router.push("/canvas"), 900);
+            setTimeout(() => router.push("/canvas"), 800);
           }, step.duration);
           timeoutsRef.current.push(done);
         }
       }, elapsed);
-
       timeoutsRef.current.push(t);
       elapsed += step.duration;
     });
@@ -105,9 +91,7 @@ export function RepoIngestionForm() {
     e.preventDefault();
     setDragActive(false);
     const file = e.dataTransfer.files[0];
-    if (file?.name.endsWith(".zip")) {
-      setUploadedFile(file);
-    }
+    if (file?.name.endsWith(".zip")) setUploadedFile(file);
   }, []);
 
   const isRunning = stage === "running";
@@ -115,8 +99,9 @@ export function RepoIngestionForm() {
 
   return (
     <div className="flex flex-col gap-5">
+
       {/* Mode toggle */}
-      <div className="flex items-center gap-1 w-fit rounded-lg bg-muted p-1">
+      <div className="flex w-fit items-center gap-1 rounded-lg bg-muted p-1">
         {(["url", "upload"] as const).map((m) => (
           <button
             key={m}
@@ -124,27 +109,23 @@ export function RepoIngestionForm() {
             disabled={isRunning}
             onClick={() => setMode(m)}
             className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
+              "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
               mode === m
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {m === "url" ? (
-              <Github className="h-3.5 w-3.5" />
-            ) : (
-              <Upload className="h-3.5 w-3.5" />
-            )}
+            {m === "url" ? <Github className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
             {m === "url" ? "GitHub URL" : "Upload ZIP"}
           </button>
         ))}
       </div>
 
-      {/* Input row — hidden once running */}
+      {/* Input — hidden while running */}
       {stage === "idle" && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {mode === "url" ? (
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 type="url"
                 placeholder="https://github.com/org/repository"
@@ -152,7 +133,7 @@ export function RepoIngestionForm() {
                 onChange={(e) => setRepoUrl(e.target.value)}
                 className="font-mono text-sm"
               />
-              <Button type="submit" disabled={!repoUrl.trim()} className="shrink-0">
+              <Button type="submit" disabled={!repoUrl.trim()} className="shrink-0 w-full sm:w-auto">
                 Analyze
               </Button>
             </div>
@@ -176,10 +157,7 @@ export function RepoIngestionForm() {
                   type="file"
                   accept=".zip"
                   className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) setUploadedFile(f);
-                  }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setUploadedFile(f); }}
                 />
                 {uploadedFile ? (
                   <>
@@ -192,7 +170,7 @@ export function RepoIngestionForm() {
                 ) : (
                   <>
                     <Upload className="h-6 w-6 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-center text-sm text-muted-foreground">
                       Drag & drop a{" "}
                       <span className="font-mono text-foreground">.zip</span>{" "}
                       or click to browse
@@ -200,20 +178,18 @@ export function RepoIngestionForm() {
                   </>
                 )}
               </div>
-              {uploadedFile && (
-                <Button type="submit">Upload & Analyze</Button>
-              )}
+              {uploadedFile && <Button type="submit">Upload & Analyze</Button>}
             </>
           )}
         </form>
       )}
 
-      {/* Pipeline progress card */}
+      {/* Pipeline card */}
       {(isRunning || isDone) && (
-        <div className="rounded-lg border border-border bg-card p-5">
+        <div className="rounded-lg border border-border bg-muted/30 p-4 sm:p-5">
           {/* Repo label */}
           <div className="mb-4 flex items-center gap-2">
-            <Github className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Github className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="truncate font-mono text-sm font-semibold text-foreground">
               {mode === "url"
                 ? repoUrl.replace("https://github.com/", "")
@@ -221,22 +197,19 @@ export function RepoIngestionForm() {
             </span>
           </div>
 
-          {/* Step list */}
-          <ol className="mb-4 flex flex-col gap-2">
+          {/* Steps — 2-col grid on wide screens */}
+          <ol className="mb-4 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             {PIPELINE.map((step, i) => {
               const done    = i < stepIndex || isDone;
               const current = i === stepIndex && isRunning;
-              const pending = i > stepIndex && !isDone;
               return (
-                <li key={step.label} className="flex items-center gap-3">
+                <li key={step.label} className="flex items-center gap-2.5">
                   <span
                     className={cn(
-                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
-                      done
-                        ? "bg-emerald-500 text-white"
-                        : current
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-colors",
+                      done    ? "bg-emerald-500 text-white"
+                      : current ? "bg-primary text-primary-foreground"
+                               : "bg-muted text-muted-foreground"
                     )}
                   >
                     {done ? "✓" : i + 1}
@@ -244,16 +217,14 @@ export function RepoIngestionForm() {
                   <span
                     className={cn(
                       "text-xs transition-colors",
-                      done
-                        ? "text-emerald-400"
-                        : current
-                        ? "font-medium text-foreground"
-                        : "text-muted-foreground"
+                      done    ? "text-emerald-400"
+                      : current ? "font-medium text-foreground"
+                               : "text-muted-foreground"
                     )}
                   >
                     {step.label}
                     {current && (
-                      <Loader2 className="ml-1.5 inline-block h-3 w-3 animate-spin align-middle" />
+                      <Loader2 className="ml-1 inline-block h-3 w-3 animate-spin align-middle" />
                     )}
                   </span>
                 </li>
@@ -261,15 +232,12 @@ export function RepoIngestionForm() {
             })}
           </ol>
 
-          {/* Progress bar */}
           <Progress value={progress} className="mb-3 h-1" />
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               {isDone ? (
-                <span className="text-emerald-400 font-medium">
-                  Redirecting to canvas…
-                </span>
+                <span className="font-medium text-emerald-400">Redirecting to canvas…</span>
               ) : (
                 stepLabel
               )}
@@ -277,7 +245,7 @@ export function RepoIngestionForm() {
             {!isDone && (
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
               >
                 <XCircle className="h-3.5 w-3.5" />
                 Cancel
