@@ -1,255 +1,306 @@
 import type { Node, Edge } from "reactflow";
 
+// ── Mock: legacy e-commerce Python monolith ───────────────────────────────────
+// Filename labels mirror real Python files so the demo reads authentically.
+
 export const MOCK_NODES: Node[] = [
-  // ── API Layer ──────────────────────────────────────────────────────────────
+  // ── API / Route layer ─────────────────────────────────────────────────────
   {
-    id: "api-users",
+    id: "route-auth",
     type: "apiRoute",
-    position: { x: 80, y: 60 },
+    position: { x: 60, y: 40 },
     data: {
-      label: "User Routes",
-      sublabel: "/api/users/*",
-      icon: "Users",
-      metrics: [
-        { label: "Endpoints", value: "12" },
-        { label: "Avg latency", value: "42ms" },
-      ],
-    },
-  },
-  {
-    id: "api-orders",
-    type: "apiRoute",
-    position: { x: 320, y: 60 },
-    data: {
-      label: "Order Routes",
-      sublabel: "/api/orders/*",
-      icon: "ShoppingCart",
+      label: "auth_routes.py",
+      sublabel: "/api/auth/*  •  8 endpoints",
+      icon: "Globe",
       metrics: [
         { label: "Endpoints", value: "8" },
-        { label: "Avg latency", value: "78ms" },
+        { label: "Avg latency", value: "34 ms" },
       ],
     },
   },
   {
-    id: "api-inventory",
+    id: "route-orders",
     type: "apiRoute",
-    position: { x: 560, y: 60 },
+    position: { x: 320, y: 40 },
     data: {
-      label: "Inventory Routes",
-      sublabel: "/api/inventory/*",
-      icon: "Package",
+      label: "order_routes.py",
+      sublabel: "/api/orders/*  •  11 endpoints",
+      icon: "Globe",
+      metrics: [
+        { label: "Endpoints", value: "11" },
+        { label: "Avg latency", value: "92 ms" },
+      ],
+    },
+  },
+  {
+    id: "route-inventory",
+    type: "apiRoute",
+    position: { x: 580, y: 40 },
+    data: {
+      label: "inventory_routes.py",
+      sublabel: "/api/inventory/*  •  6 endpoints",
+      icon: "Globe",
       metrics: [
         { label: "Endpoints", value: "6" },
-        { label: "Avg latency", value: "31ms" },
+        { label: "Avg latency", value: "28 ms" },
       ],
     },
   },
   {
-    id: "api-payments",
+    id: "route-payments",
     type: "apiRoute",
-    position: { x: 800, y: 60 },
+    position: { x: 840, y: 40 },
     data: {
-      label: "Payment Routes",
-      sublabel: "/api/payments/*",
-      icon: "CreditCard",
+      label: "payment_routes.py",
+      sublabel: "/api/payments/*  •  5 endpoints",
+      icon: "Globe",
       metrics: [
         { label: "Endpoints", value: "5" },
-        { label: "Avg latency", value: "120ms" },
+        { label: "Avg latency", value: "210 ms" },
       ],
     },
   },
 
-  // ── Business Logic Layer ───────────────────────────────────────────────────
+  // ── Service / Business Logic layer ────────────────────────────────────────
   {
-    id: "svc-users",
+    id: "svc-auth",
     type: "businessLogic",
-    position: { x: 80, y: 260 },
+    position: { x: 60, y: 240 },
     data: {
-      label: "UserService",
-      sublabel: "services/user_service.py",
+      label: "UserAuth.py",
+      sublabel: "services/  •  JWT + sessions",
       icon: "Box",
       metrics: [
-        { label: "Functions", value: "24" },
-        { label: "Classes", value: "3" },
+        { label: "Classes", value: "2" },
+        { label: "Functions", value: "18" },
+        { label: "Coupling", value: "LOW" },
       ],
     },
   },
   {
     id: "svc-orders",
     type: "businessLogic",
-    position: { x: 320, y: 260 },
+    position: { x: 320, y: 240 },
     data: {
-      label: "OrderService",
-      sublabel: "services/order_service.py",
+      label: "OrderService.py",
+      sublabel: "services/  •  core domain",
       icon: "Box",
       metrics: [
-        { label: "Functions", value: "31" },
-        { label: "Classes", value: "5" },
+        { label: "Classes", value: "4" },
+        { label: "Functions", value: "37" },
+        { label: "Coupling", value: "HIGH" },
       ],
     },
   },
   {
     id: "svc-inventory",
     type: "businessLogic",
-    position: { x: 560, y: 260 },
+    position: { x: 580, y: 240 },
     data: {
-      label: "InventoryService",
-      sublabel: "services/inventory_service.py",
+      label: "InventoryService.py",
+      sublabel: "services/  •  stock & SKUs",
       icon: "Box",
       metrics: [
-        { label: "Functions", value: "18" },
-        { label: "Classes", value: "2" },
+        { label: "Classes", value: "3" },
+        { label: "Functions", value: "22" },
+        { label: "Coupling", value: "MEDIUM" },
       ],
     },
   },
   {
     id: "svc-payments",
     type: "businessLogic",
-    position: { x: 800, y: 260 },
+    position: { x: 840, y: 240 },
     data: {
-      label: "PaymentService",
-      sublabel: "services/payment_service.py",
+      label: "StripeIntegration.py",
+      sublabel: "services/  •  billing & refunds",
       icon: "Box",
       metrics: [
+        { label: "Classes", value: "3" },
         { label: "Functions", value: "14" },
-        { label: "Classes", value: "4" },
-        { label: "Coupling score", value: "HIGH" },
+        { label: "Coupling", value: "MEDIUM" },
+      ],
+    },
+  },
+  {
+    id: "svc-notifications",
+    type: "businessLogic",
+    position: { x: 1100, y: 240 },
+    data: {
+      label: "NotificationService.py",
+      sublabel: "services/  •  email & push",
+      icon: "Box",
+      metrics: [
+        { label: "Classes", value: "2" },
+        { label: "Functions", value: "9" },
+        { label: "Coupling", value: "LOW" },
       ],
     },
   },
 
-  // ── Database Layer ─────────────────────────────────────────────────────────
+  // ── Data / Model layer ────────────────────────────────────────────────────
   {
     id: "db-users",
     type: "database",
-    position: { x: 80, y: 460 },
+    position: { x: 60, y: 450 },
     data: {
-      label: "users",
-      sublabel: "PostgreSQL table",
+      label: "User  +  Session",
+      sublabel: "models/user.py  •  PostgreSQL",
       icon: "Database",
       metrics: [
-        { label: "Columns", value: "18" },
-        { label: "FK refs", value: "4" },
+        { label: "Columns", value: "21" },
+        { label: "FK refs", value: "3" },
       ],
     },
   },
   {
     id: "db-orders",
     type: "database",
-    position: { x: 320, y: 460 },
+    position: { x: 320, y: 450 },
     data: {
-      label: "orders + line_items",
-      sublabel: "PostgreSQL tables",
+      label: "Order  +  LineItem",
+      sublabel: "models/order.py  •  PostgreSQL",
       icon: "Database",
       metrics: [
-        { label: "Columns", value: "32" },
-        { label: "FK refs", value: "7" },
+        { label: "Columns", value: "38" },
+        { label: "FK refs", value: "8" },
       ],
     },
   },
   {
-    id: "db-inventory",
+    id: "db-products",
     type: "database",
-    position: { x: 560, y: 460 },
+    position: { x: 580, y: 450 },
     data: {
-      label: "products + stock",
-      sublabel: "PostgreSQL tables",
+      label: "Product  +  Stock",
+      sublabel: "models/product.py  •  PostgreSQL",
+      icon: "Database",
+      metrics: [
+        { label: "Columns", value: "29" },
+        { label: "FK refs", value: "4" },
+      ],
+    },
+  },
+  {
+    id: "db-transactions",
+    type: "database",
+    position: { x: 840, y: 450 },
+    data: {
+      label: "Transaction  ⚠ shared",
+      sublabel: "models/billing.py  •  accessed by 3 services",
       icon: "Database",
       metrics: [
         { label: "Columns", value: "24" },
-        { label: "FK refs", value: "3" },
-      ],
-    },
-  },
-  {
-    id: "db-shared",
-    type: "database",
-    position: { x: 800, y: 460 },
-    data: {
-      label: "transactions",
-      sublabel: "PostgreSQL table — shared",
-      icon: "Database",
-      metrics: [
-        { label: "Columns", value: "21" },
-        { label: "FK refs", value: "9" },
-        { label: "Shared by", value: "3 services" },
+        { label: "FK refs", value: "11" },
+        { label: "Risk", value: "HIGH" },
       ],
     },
   },
 
-  // ── External services ──────────────────────────────────────────────────────
+  // ── External services ─────────────────────────────────────────────────────
   {
     id: "ext-stripe",
     type: "externalService",
-    position: { x: 800, y: 660 },
+    position: { x: 840, y: 650 },
     data: {
       label: "Stripe API",
-      sublabel: "Payment gateway",
+      sublabel: "api.stripe.com  •  REST",
       icon: "Globe",
-      metrics: [{ label: "Integration", value: "REST" }],
+      metrics: [{ label: "SDK", value: "stripe-python" }],
     },
   },
   {
-    id: "ext-email",
+    id: "ext-sendgrid",
     type: "externalService",
-    position: { x: 320, y: 660 },
+    position: { x: 1100, y: 450 },
     data: {
       label: "SendGrid",
       sublabel: "Transactional email",
       icon: "Mail",
-      metrics: [{ label: "Integration", value: "SMTP + API" }],
+      metrics: [{ label: "SDK", value: "sendgrid-python" }],
+    },
+  },
+  {
+    id: "ext-redis",
+    type: "externalService",
+    position: { x: 60, y: 650 },
+    data: {
+      label: "Redis Cache",
+      sublabel: "Session store  •  rate limiting",
+      icon: "Package",
+      metrics: [{ label: "Library", value: "redis-py" }],
     },
   },
 ];
 
 export const MOCK_EDGES: Edge[] = [
-  // API → Service
-  { id: "e1", source: "api-users", target: "svc-users", animated: false },
-  { id: "e2", source: "api-orders", target: "svc-orders", animated: false },
-  { id: "e3", source: "api-inventory", target: "svc-inventory", animated: false },
-  { id: "e4", source: "api-payments", target: "svc-payments", animated: false },
+  // Route → Service (vertical, clean)
+  { id: "e-ra-sa",  source: "route-auth",      target: "svc-auth" },
+  { id: "e-ro-so",  source: "route-orders",    target: "svc-orders" },
+  { id: "e-ri-si",  source: "route-inventory", target: "svc-inventory" },
+  { id: "e-rp-sp",  source: "route-payments",  target: "svc-payments" },
 
-  // Service → DB
-  { id: "e5", source: "svc-users", target: "db-users" },
-  { id: "e6", source: "svc-orders", target: "db-orders" },
-  { id: "e7", source: "svc-inventory", target: "db-inventory" },
-  { id: "e8", source: "svc-payments", target: "db-shared" },
+  // Service → DB (ownership)
+  { id: "e-sa-du",  source: "svc-auth",      target: "db-users" },
+  { id: "e-so-do",  source: "svc-orders",    target: "db-orders" },
+  { id: "e-si-dp",  source: "svc-inventory", target: "db-products" },
+  { id: "e-sp-dt",  source: "svc-payments",  target: "db-transactions" },
 
-  // Cross-service dependencies (the tight coupling we need to break)
+  // Cross-service coupling (amber dashes = the tight coupling to break)
   {
-    id: "e9",
+    id: "e-so-si",
     source: "svc-orders",
     target: "svc-inventory",
     label: "stock check",
-    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "4 4" },
-    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10 },
+    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "5 4" },
+    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10, fontWeight: 600 },
+    labelBgStyle: { fill: "hsl(222 47% 8%)", fillOpacity: 0.85 },
   },
   {
-    id: "e10",
+    id: "e-so-sp",
     source: "svc-orders",
     target: "svc-payments",
     label: "charge",
-    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "4 4" },
-    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10 },
+    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "5 4" },
+    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10, fontWeight: 600 },
+    labelBgStyle: { fill: "hsl(222 47% 8%)", fillOpacity: 0.85 },
   },
   {
-    id: "e11",
+    id: "e-so-sn",
     source: "svc-orders",
-    target: "svc-users",
-    label: "lookup",
-    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "4 4" },
-    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10 },
+    target: "svc-notifications",
+    label: "order email",
+    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "5 4" },
+    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10, fontWeight: 600 },
+    labelBgStyle: { fill: "hsl(222 47% 8%)", fillOpacity: 0.85 },
+  },
+  {
+    id: "e-sa-si",
+    source: "svc-auth",
+    target: "svc-orders",
+    label: "user lookup",
+    style: { stroke: "hsl(38 92% 50%)", strokeDasharray: "5 4" },
+    labelStyle: { fill: "hsl(38 92% 50%)", fontSize: 10, fontWeight: 600 },
+    labelBgStyle: { fill: "hsl(222 47% 8%)", fillOpacity: 0.85 },
   },
 
-  // Shared DB access (the real problem)
+  // Shared DB access (red = anti-pattern)
   {
-    id: "e12",
+    id: "e-so-dt",
     source: "svc-orders",
-    target: "db-shared",
+    target: "db-transactions",
+    style: { stroke: "hsl(0 72% 51%)", strokeWidth: 2 },
+  },
+  {
+    id: "e-si-dt",
+    source: "svc-inventory",
+    target: "db-transactions",
     style: { stroke: "hsl(0 72% 51%)", strokeWidth: 2 },
   },
 
-  // External
-  { id: "e13", source: "svc-payments", target: "ext-stripe" },
-  { id: "e14", source: "svc-orders", target: "ext-email" },
+  // External integrations
+  { id: "e-sp-stripe",    source: "svc-payments",      target: "ext-stripe" },
+  { id: "e-sn-sendgrid",  source: "svc-notifications", target: "ext-sendgrid" },
+  { id: "e-sa-redis",     source: "svc-auth",          target: "ext-redis" },
 ];

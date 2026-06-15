@@ -1,59 +1,74 @@
-"use client";
-
-import { useState } from "react";
-import { Network } from "lucide-react";
+import { Zap } from "lucide-react";
 import { RepoIngestionForm } from "@/components/forms/RepoIngestionForm";
-import { DependencyGraph } from "@/components/graph/DependencyGraph";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function AnalysisPage() {
-  const [completedJobId, setCompletedJobId] = useState<string | null>(null);
-
   return (
-    <div className="flex flex-1 flex-col gap-6 p-8 overflow-hidden">
-      {/* Header */}
+    <div className="flex flex-1 flex-col gap-6 p-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">New Analysis</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Submit a GitHub repository to extract its architecture and generate a
-          Strangler Fig migration blueprint.
+          Submit a GitHub repository URL or upload a ZIP archive. Decouple will
+          parse the AST, map dependencies, and generate your Strangler Fig
+          blueprint.
         </p>
       </div>
 
-      {/* Ingestion form */}
-      <Card className="shrink-0">
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          {
+            step: "01",
+            title: "Ingest",
+            body: "Clone & filter the repo — strips binaries, lock files, and node_modules.",
+          },
+          {
+            step: "02",
+            title: "Parse",
+            body: "Walk every Python file, extract classes, functions, and the full import graph.",
+          },
+          {
+            step: "03",
+            title: "Architect",
+            body: "Claude identifies Bounded Contexts and generates your phased migration plan.",
+          },
+        ].map(({ step, title, body }) => (
+          <div
+            key={step}
+            className="rounded-lg border border-border bg-card p-4"
+          >
+            <span className="font-mono text-xs font-bold text-primary">
+              {step}
+            </span>
+            <p className="mt-1 font-semibold text-sm">{title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {body}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">Repository Source</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Zap className="h-4 w-4 text-primary" />
+            Repository Source
+          </CardTitle>
           <CardDescription>
-            Public GitHub URLs work out of the box. For private repos, provide a
-            Personal Access Token with <code className="font-mono text-xs">repo</code>{" "}
-            scope.
+            Public repos work out of the box. For private repos, paste a
+            Personal Access Token in the URL:{" "}
+            <code className="font-mono text-xs">
+              https://TOKEN@github.com/org/repo
+            </code>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RepoIngestionForm onJobCompleted={setCompletedJobId} />
-        </CardContent>
-      </Card>
-
-      {/* Graph canvas */}
-      <Card className="flex flex-1 flex-col min-h-0">
-        <CardHeader className="shrink-0 pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Network className="h-4 w-4 text-muted-foreground" />
-            Dependency Graph
-            {completedJobId ? (
-              <span className="ml-auto text-xs font-normal text-emerald-400">
-                Live — job {completedJobId.slice(0, 8)}
-              </span>
-            ) : (
-              <span className="ml-auto text-xs font-normal text-muted-foreground">
-                Preview — mock e-commerce data
-              </span>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 p-0 pb-4 px-4">
-          <DependencyGraph className="rounded-md border border-border" />
+          <RepoIngestionForm />
         </CardContent>
       </Card>
     </div>
