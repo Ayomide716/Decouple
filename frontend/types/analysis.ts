@@ -65,11 +65,9 @@ export interface BoundedContext {
   inbound_dependencies: string[];
   outbound_dependencies: string[];
   migration_phase: number;
-}
-
-export interface MigrationBlueprint {
-  bounded_contexts: BoundedContext[];
-  migration_phases: MigrationPhase[];
+  coupling_score?: "low" | "medium" | "high";
+  strangler_intercepts?: string[];
+  rationale?: string;
 }
 
 export interface MigrationPhase {
@@ -78,6 +76,57 @@ export interface MigrationPhase {
   description: string;
   service_name: string;
   strangler_intercepts: string[];
+  shared_db_risk?: "none" | "low" | "high";
+  anti_corruption_layer?: string;
+  estimated_effort?: string;
+}
+
+export interface SharedDataRisk {
+  table_or_model: string;
+  accessed_by: string[];
+  recommendation: string;
+}
+
+export interface MigrationBlueprint {
+  bounded_contexts: BoundedContext[];
+  migration_phases: MigrationPhase[];
+  shared_data_risks?: SharedDataRisk[];
+  executive_summary?: string;
+  _meta?: {
+    repo_name: string;
+    total_files: number;
+    total_tokens: number;
+    python_files: number;
+    model: string;
+  };
+}
+
+export interface BoundedContextPreview {
+  id: string | null;
+  name: string | null;
+  description: string | null;
+  migration_phase: number | null;
+  coupling_score: string | null;
+}
+
+export interface BlueprintPreview {
+  executive_summary: string | null;
+  bounded_contexts_count: number;
+  migration_phases_count: number;
+  shared_data_risks_count: number;
+  bounded_contexts: BoundedContextPreview[];
+}
+
+export interface BlueprintStatusResponse {
+  id: string;
+  repo_name: string;
+  status: JobStatus;
+  progress: number;
+  total_files: number;
+  total_tokens: number;
+  error_message: string | null;
+  blueprint_preview: BlueprintPreview | null;
+  updated_at: string;
 }
 
 export const JOB_STATUS_STEPS: Record<

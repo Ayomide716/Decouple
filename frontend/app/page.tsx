@@ -11,11 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const RECENT_JOBS = [
+interface MockJob {
+  id: string;
+  name: string;
+  status: "completed" | "analyzing" | "failed";
+  files: number;
+  tokens: string;
+  contexts: number | null;
+  age: string;
+}
+
+const RECENT_JOBS: MockJob[] = [
   {
     id: "demo",
     name: "legacy-ecommerce",
-    status: "completed" as const,
+    status: "completed",
     files: 247,
     tokens: "184K",
     contexts: 5,
@@ -24,7 +34,7 @@ const RECENT_JOBS = [
   {
     id: "2",
     name: "django-erp",
-    status: "analyzing" as const,
+    status: "analyzing",
     files: 512,
     tokens: "310K",
     contexts: null,
@@ -33,7 +43,7 @@ const RECENT_JOBS = [
   {
     id: "3",
     name: "flask-payments",
-    status: "failed" as const,
+    status: "failed",
     files: 0,
     tokens: "—",
     contexts: null,
@@ -138,7 +148,7 @@ export default function DashboardPage() {
                       <td className="px-5 py-3.5">
                         {job.status === "completed" && (
                           <Link
-                            href="/canvas"
+                            href={job.id === "demo" ? "/canvas" : `/canvas/${job.id}`}
                             className="flex items-center gap-1 text-xs text-primary hover:underline"
                           >
                             View canvas <ArrowRight className="h-3 w-3" />
@@ -175,7 +185,7 @@ export default function DashboardPage() {
                   </div>
                   {job.status === "completed" && (
                     <Link
-                      href="/canvas"
+                      href={job.id === "demo" ? "/canvas" : `/canvas/${job.id}`}
                       className="shrink-0 flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
                     >
                       Canvas <ArrowRight className="h-3 w-3" />
